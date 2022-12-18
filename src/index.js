@@ -75,6 +75,10 @@ const run = async () => {
         console.log(OS_COMMAND_OPTIONS_MSG);
       } else {
         switch (command) {
+          case "cd":
+            currentDirectory = resolve(currentDirectory, option);
+            console.log(getDirectoryMessage(currentDirectory));
+            break;
           case "os":
             const cleanOption = option.slice(2);
             const result = await os(cleanOption);
