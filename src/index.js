@@ -1,13 +1,14 @@
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { rename as renameFile, existsSync } from "node:fs";
-import { sep, join, parse, resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { sep, parse, resolve } from "node:path";
 import { homedir } from "node:os";
 import { calculateHash } from "./hash.js";
 import { list } from "./directoryOperations.js";
 import { os } from "./os.js";
 import { getUsername } from "./args.js";
 import { OS_COMMAND_OPTIONS_MSG, DEFAULT_ERROR_MSG } from "./constants.js";
+import { add, read, rm } from "./fileOperations.js";
 
 const getDirectoryMessage = (directory) => {
   return `You are currently in ${directory}${sep}`;
@@ -20,6 +21,15 @@ const run = async () => {
   console.log(getDirectoryMessage(currentDirectory));
 
   const rl = readline.createInterface({ input, output });
+  rl.on("SIGINT", () => {
+    process.emit("SIGINT");
+  });
+
+  process.on("SIGINT", () => {
+    console.log(`Thank you for using File Manager, ${username}, goodbye!`);
+    process.exit(0);
+  });
+
   let firstCommand = true;
   let userInput;
   while (true) {
@@ -35,6 +45,8 @@ const run = async () => {
     const option = userInput[1];
 
     switch (command) {
+      case ".exit":
+        process.emit("SIGINT");
       case "up":
         if (currentDirectory.endsWith(":")) {
           console.log("You are already in the root folder");
@@ -81,8 +93,31 @@ const run = async () => {
               console.log(err.message);
             }
             break;
-          case "hello":
-            output.write("hello");
+          case "cat":
+            try {
+              let readResult = await read(resolve(currentDirectory, option));
+              console.log(readResult);
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.messge);
+            }
+            break;
+          case "add":
+            try {
+              let result = await add(resolve(currentDirectory, option));
+              console.log(result);
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.message);
+            }
+            break;
+          case "rm":
+            try {
+              console.log(await rm(resolve(currentDirectory, option)));
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.message);
+            }
             break;
           default:
             console.log("Invalid input");
