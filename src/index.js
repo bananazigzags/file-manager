@@ -9,7 +9,7 @@ import { os } from "./os.js";
 import { getUsername } from "./args.js";
 import { OS_COMMAND_OPTIONS_MSG, DEFAULT_ERROR_MSG } from "./constants.js";
 import { add, read, rm } from "./fileOperations.js";
-import { compressBrotli } from "./brotli.js";
+import { compressBrotli, decompressBrotli } from "./brotli.js";
 
 const getDirectoryMessage = (directory) => {
   return `You are currently in ${directory}${sep}`;
@@ -130,12 +130,32 @@ const run = async () => {
             }
             break;
           case "compress":
-            const pathToDest = userInput[2];
+            const pathToDestZip = userInput[2];
             try {
+              if (!existsSync(resolve(currentDirectory, option))) {
+                throw new Error(DEFAULT_ERROR_MSG);
+              }
               console.log(
                 await compressBrotli(
                   resolve(currentDirectory, option),
-                  resolve(currentDirectory, `${pathToDest}.br`)
+                  resolve(currentDirectory, `${pathToDestZip}.br`)
+                )
+              );
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.message);
+            }
+            break;
+          case "decompress":
+            const pathToDestUnzip = userInput[2];
+            try {
+              if (!existsSync(resolve(currentDirectory, option))) {
+                throw new Error(DEFAULT_ERROR_MSG);
+              }
+              console.log(
+                await decompressBrotli(
+                  resolve(currentDirectory, option),
+                  resolve(currentDirectory, pathToDestUnzip)
                 )
               );
               console.log(getDirectoryMessage(currentDirectory));
