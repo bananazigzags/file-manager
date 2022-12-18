@@ -77,7 +77,12 @@ const run = async () => {
       } else {
         switch (command) {
           case "cd":
-            currentDirectory = resolve(currentDirectory, option);
+            let newDir = resolve(currentDirectory, option);
+            if (!existsSync(newDir)) {
+              console.log(DEFAULT_ERROR_MSG);
+            } else {
+              currentDirectory = newDir;
+            }
             console.log(getDirectoryMessage(currentDirectory));
             break;
           case "os":
