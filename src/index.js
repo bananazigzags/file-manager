@@ -8,7 +8,7 @@ import { list } from "./directoryOperations.js";
 import { os } from "./os.js";
 import { getUsername } from "./args.js";
 import { OS_COMMAND_OPTIONS_MSG, DEFAULT_ERROR_MSG } from "./constants.js";
-import { add, read, rm, rn } from "./fileOperations.js";
+import { add, read, rm, rn, copy } from "./fileOperations.js";
 import { compressBrotli, decompressBrotli } from "./brotli.js";
 
 const getDirectoryMessage = (directory) => {
@@ -136,6 +136,20 @@ const run = async () => {
                 throw new Error(DEFAULT_ERROR_MSG);
               }
               console.log(await rn(resolve(currentDirectory, option), newName));
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.message);
+            }
+            break;
+          case "cp":
+            const pathToNewDir = userInput[2];
+            try {
+              console.log(
+                await copy(
+                  resolve(currentDirectory, option),
+                  resolve(currentDirectory, pathToNewDir)
+                )
+              );
               console.log(getDirectoryMessage(currentDirectory));
             } catch (err) {
               console.log(err.message);

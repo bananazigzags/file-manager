@@ -1,5 +1,14 @@
-import { rename, createReadStream, open, unlink } from "node:fs";
-import { sep, resolve as pathResolve } from "node:path";
+import {
+  rename,
+  createReadStream,
+  open,
+  unlink,
+  cp,
+  createWriteStream,
+  existsSync,
+  mkdir,
+} from "node:fs";
+import { sep, join } from "node:path";
 import { DEFAULT_ERROR_MSG } from "./constants.js";
 
 export const read = async (path) => {
@@ -19,6 +28,7 @@ export const read = async (path) => {
 export const add = async (path) => {
   return new Promise((resolve, reject) => {
     open(path, "wx", (err, file) => {
+      console.log(path);
       if (err) {
         reject(new Error(DEFAULT_ERROR_MSG));
       } else {
@@ -49,6 +59,26 @@ export const rn = async (path, newName) => {
     rename(path, newPath, (err) => {
       if (err) reject(new Error(DEFAULT_ERROR_MSG));
       resolve(`File successfully renamed. New path is ${newPath}`);
+    });
+  });
+};
+
+export const copy = async (pathToFile, pathToNewDir) => {
+  const splitPath = pathToFile.split(sep);
+  const fileName = splitPath.slice(-1)[0];
+  const newFilePath = join(pathToNewDir, fileName);
+
+  return new Promise((resolve, reject) => {
+    mkdir(pathToNewDir, (err) => {
+      if (err) reject(new Error(DEFAULT_ERROR_MSG));
+    });
+
+    const readable = createReadStream(pathToFile);
+    const writable = createWriteStream(newFilePath);
+
+    readable.pipe(writable);
+    writable.on("finish", () => {
+      resolve("File successfully copied");
     });
   });
 };
