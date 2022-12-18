@@ -13,7 +13,6 @@ export const list = async (dirToRead) => {
           fileItem["Type"] = stats.isDirectory() ? "directory" : "file";
           resolve(fileItem);
         } catch (error) {
-          // console.log(error.message);
           fileItem["Type"] = "unknown";
           resolve(fileItem);
         }
