@@ -5,10 +5,9 @@ const getCpuInfoOutput = (info) => {
   const cpuNum = info.length;
   let cpuInfo = "";
   info.forEach((cpu, idx) => {
-    const modelInfo = cpu.model.split("@");
-    const model = modelInfo[0].trim();
-    const clockRate = modelInfo[1].trim();
-    cpuInfo += `CPU${idx + 1}: model is ${model}, clock rate is ${clockRate}\n`;
+    cpuInfo += `CPU${idx + 1}: model is ${cpu.model}, clock rate is ${
+      cpu.speed / 1000
+    } GHz\n`;
   });
   return `There are ${cpuNum} CPUs.\n${cpuInfo}`;
 };

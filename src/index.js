@@ -57,7 +57,7 @@ const run = async () => {
     }
 
     if (option) {
-      if (!option.startsWith("--")) {
+      if (command === "os" && !option.startsWith("--")) {
         console.log(OS_COMMAND_OPTIONS_MSG);
       } else {
         const cleanOption = option.slice(2);
