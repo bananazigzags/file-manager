@@ -28,7 +28,6 @@ export const read = async (path) => {
 export const add = async (path) => {
   return new Promise((resolve, reject) => {
     open(path, "wx", (err, file) => {
-      console.log(path);
       if (err) {
         reject(new Error(DEFAULT_ERROR_MSG));
       } else {
@@ -69,9 +68,11 @@ export const copy = async (pathToFile, pathToNewDir) => {
   const newFilePath = join(pathToNewDir, fileName);
 
   return new Promise((resolve, reject) => {
-    mkdir(pathToNewDir, (err) => {
-      if (err) reject(new Error(DEFAULT_ERROR_MSG));
-    });
+    if (!existsSync(pathToNewDir)) {
+      mkdir(pathToNewDir, (err) => {
+        if (err) reject(new Error(DEFAULT_ERROR_MSG));
+      });
+    }
 
     const readable = createReadStream(pathToFile);
     const writable = createWriteStream(newFilePath);

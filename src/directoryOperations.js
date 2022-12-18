@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { stat, readdir } from "node:fs/promises";
+import { sep, parse } from "node:path";
 
 export const list = async (dirToRead) => {
   const getFilesInfo = async (files) => {
@@ -47,4 +48,19 @@ export const list = async (dirToRead) => {
   } catch {
     console.log("Operation failed");
   }
+};
+
+export const up = async (currentDirectory) => {
+  let newCurrentDirectory = currentDirectory;
+  if (currentDirectory.endsWith(":")) {
+    console.log("You are already in the root folder");
+  } else {
+    let directoryParts = currentDirectory.split(sep);
+    directoryParts.pop();
+    newCurrentDirectory = directoryParts.join(sep);
+    if (currentDirectory.endsWith(":")) {
+      newCurrentDirectory = parse(currentDirectory).root;
+    }
+  }
+  return newCurrentDirectory;
 };

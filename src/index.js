@@ -1,10 +1,10 @@
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { existsSync } from "node:fs";
-import { sep, parse, resolve } from "node:path";
+import { sep, resolve } from "node:path";
 import { homedir } from "node:os";
 import { calculateHash } from "./hash.js";
-import { list } from "./directoryOperations.js";
+import { list, up } from "./directoryOperations.js";
 import { os } from "./os.js";
 import { getUsername } from "./args.js";
 import { OS_COMMAND_OPTIONS_MSG, DEFAULT_ERROR_MSG } from "./constants.js";
@@ -45,119 +45,80 @@ const run = async () => {
     const command = userInput[0];
     const option = userInput[1];
 
-    switch (command) {
-      case ".exit":
-        process.emit("SIGINT");
-      case "up":
-        if (currentDirectory.endsWith(":")) {
-          console.log("You are already in the root folder");
-        } else {
-          let directoryParts = currentDirectory.split(sep);
-          directoryParts.pop();
-          currentDirectory = directoryParts.join(sep);
-          if (currentDirectory.endsWith(":")) {
-            currentDirectory = parse(currentDirectory).root;
-          }
-        }
-        console.log(getDirectoryMessage(currentDirectory));
-        break;
-      case "ls":
-        let dirToRead = currentDirectory.endsWith(":")
-          ? currentDirectory + sep
-          : currentDirectory;
-        let result = await list(dirToRead);
-        console.table(result);
-      default:
-        break;
+    if (!option) {
+      switch (command) {
+        case ".exit":
+          process.emit("SIGINT");
+        case "up":
+          currentDirectory = await up(currentDirectory);
+          console.log(getDirectoryMessage(currentDirectory));
+          break;
+        case "ls":
+          let dirToRead = currentDirectory.endsWith(":")
+            ? currentDirectory + sep
+            : currentDirectory;
+          let result = await list(dirToRead);
+          console.table(result);
+        default:
+          console.log("Invalid input");
+          break;
+      }
     }
 
     if (option) {
       if (command === "os" && !option.startsWith("--")) {
         console.log(OS_COMMAND_OPTIONS_MSG);
       } else {
-        switch (command) {
-          case "cd":
-            let newDir = resolve(currentDirectory, option);
-            if (!existsSync(newDir)) {
-              console.log(DEFAULT_ERROR_MSG);
-            } else {
-              currentDirectory = newDir;
-            }
-            console.log(getDirectoryMessage(currentDirectory));
-            break;
-          case "os":
-            const cleanOption = option.slice(2);
-            const result = await os(cleanOption);
-            console.log(result);
-            break;
-          case "hash":
-            const filePath = resolve(currentDirectory, option);
-            console.log(filePath);
-            try {
+        try {
+          switch (command) {
+            case "cd":
+              let newDir = resolve(currentDirectory, option);
+              if (!existsSync(newDir)) {
+                console.log(DEFAULT_ERROR_MSG);
+              } else {
+                currentDirectory = newDir;
+              }
+              break;
+            case "os":
+              const cleanOption = option.slice(2);
+              const result = await os(cleanOption);
+              console.log(result);
+              break;
+            case "hash":
+              const filePath = resolve(currentDirectory, option);
               if (!existsSync(filePath)) {
                 throw new Error(DEFAULT_ERROR_MSG);
               }
-              await calculateHash(filePath);
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "cat":
-            try {
-              let readResult = await read(resolve(currentDirectory, option));
-              console.log(readResult);
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.messge);
-            }
-            break;
-          case "add":
-            try {
-              let result = await add(resolve(currentDirectory, option));
-              console.log(result);
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "rm":
-            try {
+              console.log(await calculateHash(filePath));
+              break;
+            case "cat":
+              console.log(await read(resolve(currentDirectory, option)));
+              break;
+            case "add":
+              console.log(await add(resolve(currentDirectory, option)));
+              break;
+            case "rm":
               console.log(await rm(resolve(currentDirectory, option)));
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "rn":
-            const newName = userInput[2];
-            try {
+              break;
+            case "rn":
+              const newName = userInput[2];
               if (!existsSync(resolve(currentDirectory, option))) {
                 throw new Error(DEFAULT_ERROR_MSG);
               }
               console.log(await rn(resolve(currentDirectory, option), newName));
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "cp":
-            const pathToNewDir = userInput[2];
-            try {
+              break;
+            case "cp":
+              const pathToNewDir = userInput[2];
               console.log(
                 await copy(
                   resolve(currentDirectory, option),
                   resolve(currentDirectory, pathToNewDir)
                 )
               );
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "compress":
-            const pathToDestZip = userInput[2];
-            try {
+              break;
+            case "compress":
+              const pathToDestZip = userInput[2];
+
               if (!existsSync(resolve(currentDirectory, option))) {
                 throw new Error(DEFAULT_ERROR_MSG);
               }
@@ -167,14 +128,9 @@ const run = async () => {
                   resolve(currentDirectory, `${pathToDestZip}.br`)
                 )
               );
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          case "decompress":
-            const pathToDestUnzip = userInput[2];
-            try {
+              break;
+            case "decompress":
+              const pathToDestUnzip = userInput[2];
               if (!existsSync(resolve(currentDirectory, option))) {
                 throw new Error(DEFAULT_ERROR_MSG);
               }
@@ -184,13 +140,14 @@ const run = async () => {
                   resolve(currentDirectory, pathToDestUnzip)
                 )
               );
-              console.log(getDirectoryMessage(currentDirectory));
-            } catch (err) {
-              console.log(err.message);
-            }
-            break;
-          default:
-            console.log("Invalid input");
+              break;
+            default:
+              console.log("Invalid input");
+          }
+        } catch (err) {
+          console.log(err.message);
+        } finally {
+          console.log(getDirectoryMessage(currentDirectory));
         }
       }
     }
