@@ -83,3 +83,11 @@ export const copy = async (pathToFile, pathToNewDir) => {
     });
   });
 };
+
+export const mv = async (pathToFile, pathToNewDir) => {
+  return new Promise(async (resolve, reject) => {
+    await copy(pathToFile, pathToNewDir);
+    await rm(pathToFile);
+    resolve("File moved successfully");
+  });
+};
