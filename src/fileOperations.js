@@ -1,4 +1,5 @@
-import { createReadStream, open, unlink } from "node:fs";
+import { rename, createReadStream, open, unlink } from "node:fs";
+import { sep, resolve as pathResolve } from "node:path";
 import { DEFAULT_ERROR_MSG } from "./constants.js";
 
 export const read = async (path) => {
@@ -35,6 +36,19 @@ export const rm = async (path) => {
       } else {
         resolve("File successfully deleted");
       }
+    });
+  });
+};
+
+export const rn = async (path, newName) => {
+  return new Promise((resolve, reject) => {
+    const splitPath = path.split(sep);
+    splitPath.splice(-1, 1, newName);
+    const newPath = splitPath.join(sep);
+
+    rename(path, newPath, (err) => {
+      if (err) reject(new Error(DEFAULT_ERROR_MSG));
+      resolve(`File successfully renamed. New path is ${newPath}`);
     });
   });
 };

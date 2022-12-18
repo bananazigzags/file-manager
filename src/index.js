@@ -8,7 +8,7 @@ import { list } from "./directoryOperations.js";
 import { os } from "./os.js";
 import { getUsername } from "./args.js";
 import { OS_COMMAND_OPTIONS_MSG, DEFAULT_ERROR_MSG } from "./constants.js";
-import { add, read, rm } from "./fileOperations.js";
+import { add, read, rm, rn } from "./fileOperations.js";
 import { compressBrotli, decompressBrotli } from "./brotli.js";
 
 const getDirectoryMessage = (directory) => {
@@ -124,6 +124,18 @@ const run = async () => {
           case "rm":
             try {
               console.log(await rm(resolve(currentDirectory, option)));
+              console.log(getDirectoryMessage(currentDirectory));
+            } catch (err) {
+              console.log(err.message);
+            }
+            break;
+          case "rn":
+            const newName = userInput[2];
+            try {
+              if (!existsSync(resolve(currentDirectory, option))) {
+                throw new Error(DEFAULT_ERROR_MSG);
+              }
+              console.log(await rn(resolve(currentDirectory, option), newName));
               console.log(getDirectoryMessage(currentDirectory));
             } catch (err) {
               console.log(err.message);
