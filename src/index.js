@@ -44,25 +44,27 @@ const run = async () => {
     const arg2 = userInput[2];
 
     const commandHandlers = {
-      add: async () => console.log(await add(vDir.append(arg1))),
-      cat: async () => console.log(await read(vDir.append(arg1))),
+      add: async () => await add(vDir.append(arg1)),
+      cat: async () => await read(vDir.append(arg1)),
       cd: () => vDir.changeDirectory(vDir.append(arg1)),
-      compress: async () => console.log(await compressBrotli(vDir.append(arg1), vDir.append(`${arg2}.br`))),
-      cp: async () => console.log(await copy(vDir.append(arg1), vDir.append(arg2))),
-      decompress: async () => console.log(await decompressBrotli(vDir.append(arg1), vDir.append(arg2))),
-      hash: async () => console.log(await calculateHash(vDir.append(arg1))),
-      ls: async () => console.table(await list(vDir.getCurrent())),
-      mv: async () => console.log(await mv(vDir.append(arg1), vDir.append(arg2))),
-      os: () => console.log(os(arg1)),
+      compress: async () => await compressBrotli(vDir.append(arg1), vDir.append(`${arg2}.br`)),
+      cp: async () => await copy(vDir.append(arg1), vDir.append(arg2)),
+      decompress: async () => await decompressBrotli(vDir.append(arg1), vDir.append(arg2)),
+      hash: async () => await calculateHash(vDir.append(arg1)),
+      ls: async () => await list(vDir.getCurrent()),
+      mv: async () => await mv(vDir.append(arg1), vDir.append(arg2)),
+      os: () => os(arg1),
       ['.exit']: () => process.emit("SIGINT"),
-      rm: async () => console.log(await rm(vDir.append(arg1))),
-      rn: async () => console.log(await rn(vDir.append(arg1), arg2)),
+      rm: async () => await rm(vDir.append(arg1)),
+      rn: async () => await rn(vDir.append(arg1), arg2),
       up: () => vDir.changeDirectory(up(vDir.getCurrent())),
     }
 
     try {
       if (commandHandlers.hasOwnProperty(command) && validateCommand(command, userInput.length - 1)) {
-        await commandHandlers[command]?.();
+        const result = await commandHandlers[command]?.();
+        const shouldLogResult = !['up', 'cd', '.exit'].includes(command);
+        if (shouldLogResult) console.log(result);
       } else {
         console.log('Invalid input')
       }
