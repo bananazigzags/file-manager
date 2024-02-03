@@ -1,5 +1,3 @@
-import * as readline from "node:readline/promises";
-import { stdin as input, stdout as output } from "node:process";
 import { homedir } from "node:os";
 import { calculateHash } from "./hash.js";
 import { list, up } from "./directoryOperations.js";
@@ -10,36 +8,20 @@ import { add, read, rm, rn, copy, mv } from "./fileOperations.js";
 import { compressBrotli, decompressBrotli } from "./brotli.js";
 import { VirtualDirectory } from "./virtualDirectory.js";
 import { validateCommand } from "./validation.js";
+import { UserInterface } from "./userInterface.js";
 
 const run = async () => {
   const username = getUsername();
   const vDir = new VirtualDirectory(homedir());
-
-  console.log(`Welcome to the File Manager, ${username}!`);
+  const host = new UserInterface(username);
+  
+  host.greet()
   vDir.printDirectoryMessage();
 
-  const rl = readline.createInterface({ input, output });
-  rl.on("SIGINT", () => {
-    process.emit("SIGINT");
-  });
-
-  process.on("SIGINT", () => {
-    console.log(`Thank you for using File Manager, ${username}, goodbye!`);
-    process.exit(0);
-  });
-
-  let firstCommand = true;
   let userInput;
   while (true) {
-    if (firstCommand) {
-      userInput = (
-        await rl.question("What would you like to do today?\n")
-      ).split(" ");
-      firstCommand = false;
-    } else {
-      userInput = (await rl.question("Anything else?\n")).split(" ");
-    }
-    
+    userInput = (await host.prompt()).split(' ')
+
     const [ command, arg1, arg2 ] = userInput;
    
     const commandHandlers = {
