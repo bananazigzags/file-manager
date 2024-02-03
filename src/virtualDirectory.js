@@ -1,4 +1,5 @@
 import { sep, resolve } from "node:path";
+import { validatePath } from "./validation.js";
 
 export class VirtualDirectory {
   constructor(homedir) {
@@ -6,6 +7,7 @@ export class VirtualDirectory {
   }
 
   changeDirectory(directory) {
+    validatePath(directory);
     this.currentDirectory = directory;
   }
 

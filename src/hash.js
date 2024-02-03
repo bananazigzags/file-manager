@@ -1,7 +1,10 @@
 import { createReadStream } from "node:fs";
+import { validatePath } from "./validation.js";
 const { createHash } = await import("node:crypto");
 
 export const calculateHash = async (path) => {
+  validatePath(path);
+
   return new Promise((resolve, reject) => {
     const input = createReadStream(path);
     const hash = createHash("sha256");
