@@ -1,23 +1,21 @@
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { sep, resolve } from "node:path";
 import { homedir } from "node:os";
 import { calculateHash } from "./hash.js";
 import { list, up } from "./directoryOperations.js";
 import { os } from "./os.js";
 import { getUsername } from "./args.js";
-import { OS_COMMAND_OPTIONS_MSG } from "./constants.js";
+import { DEFAULT_ERROR_MSG } from "./constants.js";
 import { add, read, rm, rn, copy, mv } from "./fileOperations.js";
 import { compressBrotli, decompressBrotli } from "./brotli.js";
-import { validatePath } from "./validation.js";
 import { VirtualDirectory } from "./virtualDirectory.js";
+import { validateCommand } from "./validation.js";
 
 const run = async () => {
   const username = getUsername();
   const vDir = new VirtualDirectory(homedir());
 
   console.log(`Welcome to the File Manager, ${username}!`);
-  
   vDir.printDirectoryMessage();
 
   const rl = readline.createInterface({ input, output });
@@ -42,116 +40,36 @@ const run = async () => {
       userInput = (await rl.question("Anything else?\n")).split(" ");
     }
     const command = userInput[0];
-    const option = userInput[1];
+    const arg1 = userInput[1];
+    const arg2 = userInput[2];
 
-    if (!option) {
-      try {
-        switch (command) {
-          case ".exit":
-            process.emit("SIGINT");
-          case "up":
-            const newDirectory = await up(vDir.getCurrent())
-            vDir.changeDirectory(newDirectory);
-            break;
-          case "ls":
-            let result = await list(vDir.getCurrent());
-            console.table(result);
-            break;
-          default:
-            console.log("Invalid input");
-            break;
-        }
-      } finally {
-        vDir.printDirectoryMessage();
-      }
+    const commandHandlers = {
+      add: async () => console.log(await add(vDir.append(arg1))),
+      cat: async () => console.log(await read(vDir.append(arg1))),
+      cd: () => vDir.changeDirectory(vDir.append(arg1)),
+      compress: async () => console.log(await compressBrotli(vDir.append(arg1), vDir.append(`${arg2}.br`))),
+      cp: async () => console.log(await copy(vDir.append(arg1), vDir.append(arg2))),
+      decompress: async () => console.log(await decompressBrotli(vDir.append(arg1), vDir.append(arg2))),
+      hash: async () => console.log(await calculateHash(vDir.append(arg1))),
+      ls: async () => console.table(await list(vDir.getCurrent())),
+      mv: async () => console.log(await mv(vDir.append(arg1), vDir.append(arg2))),
+      os: () => console.log(os(arg1)),
+      ['.exit']: () => process.emit("SIGINT"),
+      rm: async () => console.log(await rm(vDir.append(arg1))),
+      rn: async () => console.log(await rn(vDir.append(arg1), arg2)),
+      up: () => vDir.changeDirectory(up(vDir.getCurrent())),
     }
 
-    if (option) {
-        try {
-          switch (command) {
-            case "cd":
-              let newDir = vDir.append(option);
-              validatePath(newDir)
-              vDir.changeDirectory(newDir)
-              break;
-            case "os":
-              if(!option.startsWith("--")) {
-                console.log(OS_COMMAND_OPTIONS_MSG)
-              }
-              const cleanOption = option.slice(2);
-              const result = os(cleanOption);
-              console.log(result);
-              break;
-            case "hash":
-              const filePath = vDir.append(option);
-              validatePath(filePath);
-              console.log(await calculateHash(filePath));
-              break;
-            case "cat":
-              console.log(await read(vDir.append(option)));
-              break;
-            case "add":
-              console.log(await add(vDir.append(option)));
-              break;
-            case "rm":
-              console.log(await rm(vDir.append(option)));
-              break;
-            case "rn":
-              const fileToRename = vDir.append(option)
-              const newName = userInput[2];
-              validatePath(fileToRename)
-              console.log(await rn(fileToRename, newName));
-              break;
-            case "cp":
-              let currentDirectory = vDir.getCurrent()
-              const pathToNewDir = userInput[2];
-              console.log(
-                await copy(
-                  resolve(currentDirectory, option),
-                  resolve(currentDirectory, pathToNewDir)
-                )
-              );
-              break;
-            case "mv":
-              const movePath = userInput[2];
-              console.log(
-                await mv(
-                  vDir.append(option),
-                  resolve(vDir.getCurrent(), movePath)
-                )
-              );
-              break;
-            case "compress":
-              const pathToDestZip = userInput[2];
-              const fileToCompress = resolve(currentDirectory, option);
-
-              validatePath(fileToCompress)
-              console.log(
-                await compressBrotli(
-                  fileToCompress,
-                  resolve(vDir.getCurrent(), `${pathToDestZip}.br`)
-                )
-              );
-              break;
-            case "decompress":
-              const pathToDestUnzip = userInput[2];
-              const pathToDecompress = resolve(currentDirectory, option)
-              validatePath(pathToDecompress)
-              console.log(
-                await decompressBrotli(
-                  pathToDecompress,
-                  resolve(vDir.getCurrent(), pathToDestUnzip)
-                )
-              );
-              break;
-            default:
-              console.log("Invalid input");
-          }
-        } catch (err) {
-          console.log(err.message);
-        } finally {
-          vDir.printDirectoryMessage();
-        }
+    try {
+      if (commandHandlers.hasOwnProperty(command) && validateCommand(command, userInput.length - 1)) {
+        await commandHandlers[command]?.();
+      } else {
+        console.log('Invalid input')
+      }
+    } catch (err) {
+      console.log(DEFAULT_ERROR_MSG);
+    } finally {
+      vDir.printDirectoryMessage();
     }
   }
 };

@@ -20,4 +20,4 @@ const osHandlersMap = {
   architecture: () => `CPU architecture for which Node.js binary has compiled is ${arch()}`,
 }
 
-export const os = (command) => osHandlersMap[command]?.() || OS_COMMAND_OPTIONS_MSG
+export const os = (command) => osHandlersMap[command.slice(2)]?.() || OS_COMMAND_OPTIONS_MSG
