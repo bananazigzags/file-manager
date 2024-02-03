@@ -52,7 +52,7 @@ export const list = async (dir) => {
   }
 };
 
-export const up = async (currentDirectory) => {
+export const up = (currentDirectory) => {
   let newCurrentDirectory = currentDirectory;
   if (currentDirectory.endsWith(":")) {
     console.log("You are already in the root folder");
