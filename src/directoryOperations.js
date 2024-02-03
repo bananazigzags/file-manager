@@ -2,7 +2,9 @@ import { join } from "node:path";
 import { stat, readdir } from "node:fs/promises";
 import { sep, parse } from "node:path";
 
-export const list = async (dirToRead) => {
+export const list = async (dir) => {
+  let dirToRead = dir.endsWith(":") ? dir + sep : dir;
+
   const getFilesInfo = async (files) => {
     let filesInfo = [];
     files.forEach(async (file) => {
