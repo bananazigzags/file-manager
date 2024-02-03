@@ -39,10 +39,9 @@ const run = async () => {
     } else {
       userInput = (await rl.question("Anything else?\n")).split(" ");
     }
-    const command = userInput[0];
-    const arg1 = userInput[1];
-    const arg2 = userInput[2];
-
+    
+    const [ command, arg1, arg2 ] = userInput;
+   
     const commandHandlers = {
       add: async () => add(vDir.append(arg1)),
       cat: async () => read(vDir.append(arg1)),
