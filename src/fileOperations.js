@@ -16,80 +16,59 @@ import { validatePath } from "./validation.js";
 export const read = async (path) => {
   validatePath(path)
   const fileContent = createReadStream(path);
-  let promise = new Promise((resolve) => {
+  
+  let promise = new Promise(async (resolve) => {
     let result = "";
-    fileContent.on("data", (chunk) => {
-      result += chunk.toString();
+    fileContent.on("data", (chunk) => result += chunk.toString());
+    fileContent.on("end", () => resolve(result))
     });
-    fileContent.on("end", () => {
-      resolve(result);
-    });
-  });
   return promise;
 };
 
 export const add = async (path) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      await open(path, "wx")
-      resolve(`File is created successfully at ${path}`)
-    } catch (err) {
-      reject(err)
-    }
-  });
+  await open(path, "wx")
+  return `File is created successfully at ${path}`
 };
 
 export const rm = async (path) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      await unlink(path);
-      resolve("File successfully deleted");
-    } catch (err) {
-      reject(err)
-    }
-  });
+  await unlink(path);
+  return "File successfully deleted";
 };
 
 export const rn = async (path, newName) => {
   validatePath(path);
-  return new Promise(async (resolve, reject) => {
-    const splitPath = path.split(sep);
-    splitPath.splice(-1, 1, newName);
-    const newPath = splitPath.join(sep);
-    
-    if(existsSync(newPath)) reject()
+  const splitPath = path.split(sep);
+  splitPath.splice(-1, 1, newName);
+  const newPath = splitPath.join(sep);
+  
+  if(existsSync(newPath)) throw new Error()
 
-    await rename(path, newPath);
-    resolve(`File successfully renamed. New path is ${newPath}`);
-  });
+  await rename(path, newPath);
+  return `File successfully renamed. New path is ${newPath}`;
 };
 
 export const copy = async (pathToFile, pathToNewDir) => {
+  validatePath(pathToFile)
+
   const splitPath = pathToFile.split(sep);
-  const fileName = splitPath.slice(-1)[0];
+  const fileName = splitPath.pop();
   const newFilePath = join(pathToNewDir, fileName);
 
-  return new Promise(async (resolve, reject) => {
-    if(existsSync(pathToNewDir)) reject();
+  if(existsSync(newFilePath)) throw new Error();
 
-    try {
-      await mkdir(pathToNewDir);
-      const readable = createReadStream(pathToFile);
-      const writable = createWriteStream(newFilePath);
+  if(!existsSync(pathToNewDir)) {
+    await mkdir(pathToNewDir, { recursive: true } );
+  }
+  const readable = createReadStream(pathToFile);
+  const writable = createWriteStream(newFilePath);
 
-      pipeline(readable, writable);
+  pipeline(readable, writable);
 
-      resolve("File successfully copied");
-    } catch (err) {
-      reject(err)
-    }
-  });
+  return "File successfully copied";
 };
 
 export const mv = async (pathToFile, pathToNewDir) => {
-  return new Promise(async (resolve, _) => {
-    await copy(pathToFile, pathToNewDir);
-    await rm(pathToFile);
-    resolve("File moved successfully");
-  });
+  await copy(pathToFile, pathToNewDir);
+  await rm(pathToFile);
+  return "File moved successfully";
 };

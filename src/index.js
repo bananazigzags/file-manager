@@ -44,19 +44,19 @@ const run = async () => {
     const arg2 = userInput[2];
 
     const commandHandlers = {
-      add: async () => await add(vDir.append(arg1)),
-      cat: async () => await read(vDir.append(arg1)),
+      add: async () => add(vDir.append(arg1)),
+      cat: async () => read(vDir.append(arg1)),
       cd: () => vDir.changeDirectory(vDir.append(arg1)),
-      compress: async () => await compressBrotli(vDir.append(arg1), vDir.append(`${arg2}.br`)),
-      cp: async () => await copy(vDir.append(arg1), vDir.append(arg2)),
-      decompress: async () => await decompressBrotli(vDir.append(arg1), vDir.append(arg2)),
-      hash: async () => await calculateHash(vDir.append(arg1)),
+      compress: async () => compressBrotli(vDir.append(arg1), vDir.append(`${arg2}.br`)),
+      cp: async () => copy(vDir.append(arg1), vDir.append(arg2)),
+      decompress: async () => decompressBrotli(vDir.append(arg1), vDir.append(arg2)),
+      hash: async () => calculateHash(vDir.append(arg1)),
       ls: async () => await list(vDir.getCurrent()),
-      mv: async () => await mv(vDir.append(arg1), vDir.append(arg2)),
+      mv: async () => mv(vDir.append(arg1), vDir.append(arg2)),
       os: () => os(arg1),
       ['.exit']: () => process.emit("SIGINT"),
-      rm: async () => await rm(vDir.append(arg1)),
-      rn: async () => await rn(vDir.append(arg1), arg2),
+      rm: async () => rm(vDir.append(arg1)),
+      rn: async () => rn(vDir.append(arg1), arg2),
       up: () => vDir.changeDirectory(up(vDir.getCurrent())),
     }
 
@@ -64,7 +64,9 @@ const run = async () => {
       if (commandHandlers.hasOwnProperty(command) && validateCommand(command, userInput.length - 1)) {
         const result = await commandHandlers[command]?.();
         const shouldLogResult = !['up', 'cd', '.exit'].includes(command);
-        if (shouldLogResult) console.log(result);
+        if (shouldLogResult) {
+          command === 'ls' ? console.table(result) : console.log(result)
+        }
       } else {
         console.log('Invalid input')
       }
